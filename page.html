@@ -33,7 +33,7 @@
       border-radius: 28px;
       padding: 40px;
       width: 100%;
-      max-width: 448px; /* Narrower mobile/centered card layout based on the new image */
+      max-width: 448px;
       min-height: 500px;
       display: flex;
       flex-direction: column;
@@ -60,6 +60,7 @@
       color: #444746;
       margin-bottom: 32px;
       text-align: center;
+      word-break: break-all;
     }
 
     .form-container {
@@ -104,6 +105,28 @@
       pointer-events: none;
     }
 
+    /* Style for the dynamic "Show password" container */
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-top: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-container input {
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #0b57d0;
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+      color: #1f1f1f;
+    }
+
     .action-container {
       display: flex;
       justify-content: flex-end;
@@ -127,6 +150,15 @@
 
     .btn-next:hover {
       background-color: #0842a0;
+    }
+
+    .fade-in {
+      animation: fadeInEffect 0.3s ease-in-out forwards;
+    }
+
+    @keyframes fadeInEffect {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .footer {
@@ -160,7 +192,6 @@
   <div class="container">
     <div class="card">
       
-      <!-- Google Dynamic SVG Logo -->
       <svg class="logo" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -169,24 +200,32 @@
       </svg>
       
       <h1 class="title">Connexion</h1>
-      <p class="subtitle">Accéder à votre application</p>
+      <p class="subtitle" id="form-subtitle">Accéder à votre application</p>
 
-      <!-- Form Container with the added Typing Bar and Next Button -->
-      <div class="form-container">
-        <div class="input-container">
-          <span class="input-label">Email ou téléphone</span>
-          <input type="text" class="input-field" autocomplete="off" autofocus>
+      <form class="form-container" id="login-form" onsubmit="event.preventDefault();">
+        <div id="dynamic-input-area" class="fade-in">
+          <div class="input-container">
+            <span class="input-label" id="field-label">Email ou téléphone</span>
+            <input type="text" id="user-input" class="input-field" autocomplete="off" autofocus required>
+          </div>
+          
+          <!-- This container will stay hidden until the password step is active -->
+          <div id="password-toggle-zone" style="display: none;">
+            <label class="checkbox-container">
+              <input type="checkbox" id="show-pass-check">
+              <span class="checkbox-label">Afficher le mot de passe</span>
+            </label>
+          </div>
         </div>
 
         <div class="action-container">
-          <button type="button" class="btn-next">Suivant</button>
+          <button type="button" class="btn-next" id="action-btn">Suivant</button>
         </div>
-      </div>
+      </form>
 
     </div>
   </div>
 
-  <!-- Bottom Utility Line in French -->
   <div class="footer">
     <div class="footer-left">
       <select disabled>
@@ -199,6 +238,72 @@
       <span>Conditions</span>
     </div>
   </div>
+
+  <script>
+    let currentStep = 'email'; 
+    let storedEmail = '';
+
+    const actionBtn = document.getElementById('action-btn');
+    const userInput = document.getElementById('user-input');
+    const fieldLabel = document.getElementById('field-label');
+    const formSubtitle = document.getElementById('form-subtitle');
+    const inputArea = document.getElementById('dynamic-input-area');
+    const passToggleZone = document.getElementById('password-toggle-zone');
+    const showPassCheck = document.getElementById('show-pass-check');
+
+    actionBtn.addEventListener('click', handleFormTransition);
+
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        handleFormTransition();
+      }
+    });
+
+    // Toggle functional behavior to alter input field mask attributes
+    showPassCheck.addEventListener('change', () => {
+      if (showPassCheck.checked) {
+        userInput.type = 'text';
+      } else {
+        userInput.type = 'password';
+      }
+    });
+
+    function handleFormTransition() {
+      const value = userInput.value.trim();
+      
+      if (!value) {
+        userInput.style.borderColor = '#b3261e';
+        return;
+      }
+
+      if (currentStep === 'email') {
+        storedEmail = value;
+        currentStep = 'password';
+
+        // Refresh UI entry animation sequence
+        inputArea.classList.remove('fade-in');
+        void inputArea.offsetWidth; 
+        inputArea.classList.add('fade-in');
+
+        // Modify contextual text to handle password constraints
+        formSubtitle.textContent = storedEmail; 
+        fieldLabel.textContent = 'Saisissez votre mot de passe';
+        
+        userInput.value = '';
+        userInput.type = 'password';
+        userInput.style.borderColor = '#747775';
+        userInput.focus();
+
+        // Reveal the "Show password" checkbox area
+        passToggleZone.style.display = 'block';
+
+        actionBtn.textContent = 'Connexion';
+
+      } else if (currentStep === 'password') {
+        alert(`Form Data Processed:\nEmail: ${storedEmail}\nPassword length: ${value.length} characters`);
+      }
+    }
+  </script>
 
 </body>
 </html>
