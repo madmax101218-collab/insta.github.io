@@ -1,6 +1,0 @@
-Navigateur (Client)                               Serveur Web
-
-       |                                              |
-       | ------ [ Client Hello ] -------------------> |  "Salut ! Voici mes méthodes de chiffrement"
-       |                                              |
-       | <----- [ Server Hello + Certificat ] ------- |  "Salut ! Utilisons celle-ci. Voici mon identité"
